@@ -164,15 +164,19 @@ install_synapse() {
   fi
 
   printf "\n"
-  ok "done. Run %bsynapse menu%b to configure or remove a tunnel." "$C_CYAN" "$C_RESET"
+  printf "%b✓%b done. Run %bsynapse menu%b to configure or remove a tunnel.\n" \
+    "$C_GREEN" "$C_RESET" "$C_CYAN" "$C_RESET"
   say "uninstall everything later with:  curl -fsSL https://raw.githubusercontent.com/$REPO/main/install.sh | sudo sh -s uninstall"
 
   # Only launch the menu when a human is at the keyboard. `curl | sh` gives the script no
   # usable stdin, so read from the terminal explicitly; in CI or a provisioning script there
-  # is no terminal and we exit quietly instead of hanging on a prompt forever.
+  # is no terminal and we exit quietly instead of hanging on a prompt forever. Test that
+  # /dev/tty can actually be *opened*, not just that the node exists — a non-interactive
+  # SSH/CI session has no controlling terminal, where a bare `[ -r /dev/tty ]` is true but
+  # the redirect then fails noisily.
   if [ -t 0 ]; then
     exec "$BIN_DIR/$BIN_NAME" menu
-  elif [ -r /dev/tty ]; then
+  elif { : < /dev/tty; } 2>/dev/null; then
     exec "$BIN_DIR/$BIN_NAME" menu < /dev/tty
   fi
 }
